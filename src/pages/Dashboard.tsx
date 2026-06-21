@@ -1,5 +1,14 @@
+
 import { useEffect, useState } from "react"
-import { getTasks, createTask, deleteTask, toggleTask } from "../services/taskService"
+import {
+  getTasks,
+  createTask,
+  deleteTask,
+  toggleTask,
+} from "../services/taskService"
+
+import Navbar from "../components/Navbar"
+import StatsCards from "../components/StatsCards"
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([])
@@ -19,8 +28,10 @@ export default function Dashboard() {
     if (!title) return
 
     await createTask(title, description)
+
     setTitle("")
     setDescription("")
+
     loadTasks()
   }
 
@@ -34,63 +45,107 @@ export default function Dashboard() {
     loadTasks()
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    window.location.href = "/"
+  }
+
+  const total = tasks.length
+  const completed = tasks.filter((task) => task.completed).length
+  const pending = total - completed
+
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">My Tasks</h1>
+    <>
+      <Navbar onLogout={handleLogout} />
 
-      {/* CREATE TASK */}
-      <div className="mb-6 space-y-2">
-        <input
-          className="w-full border p-2"
-          placeholder="Task title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+      <div className="max-w-6xl mx-auto p-6">
+
+        <StatsCards
+          total={total}
+          completed={completed}
+          pending={pending}
         />
 
-        <input
-          className="w-full border p-2"
-          placeholder="Task description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
+        <h1 className="text-3xl font-bold mb-6">
+          My Tasks
+        </h1>
 
-        <button
-          onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Add Task
-        </button>
-      </div>
+        {/* CREATE TASK */}
 
-      {/* TASK LIST */}
-      <div className="space-y-3">
-        {tasks.map((task) => (
-          <div key={task.id} className="p-3 border rounded flex justify-between">
-            <div>
-              <h3 className="font-semibold">
-                {task.title} {task.completed && "✅"}
-              </h3>
-              <p className="text-sm text-gray-600">{task.description}</p>
+        <div className="bg-white shadow rounded-lg p-6 mb-8">
+
+          <input
+            className="w-full border rounded p-3 mb-3"
+            placeholder="Task title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+
+          <input
+            className="w-full border rounded p-3 mb-3"
+            placeholder="Task description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+
+          <button
+            onClick={handleCreate}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded"
+          >
+            Add Task
+          </button>
+
+        </div>
+
+        {/* TASKS */}
+
+        <div className="space-y-4">
+
+          {tasks.map((task) => (
+
+            <div
+              key={task.id}
+              className="bg-white shadow rounded-lg p-5 flex justify-between items-center"
+            >
+
+              <div>
+
+                <h2 className="text-lg font-semibold">
+                  {task.title} {task.completed && "✅"}
+                </h2>
+
+                <p className="text-gray-600">
+                  {task.description}
+                </p>
+
+              </div>
+
+              <div className="space-x-2">
+
+                <button
+                  onClick={() => handleToggle(task.id)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded"
+                >
+                  Toggle
+                </button>
+
+                <button
+                  onClick={() => handleDelete(task.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded"
+                >
+                  Delete
+                </button>
+
+              </div>
+
             </div>
 
-            <div className="space-x-2">
-              <button
-                onClick={() => handleToggle(task.id)}
-                className="px-2 py-1 bg-green-500 text-white rounded"
-              >
-                Toggle
-              </button>
+          ))}
 
-              <button
-                onClick={() => handleDelete(task.id)}
-                className="px-2 py-1 bg-red-500 text-white rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+        </div>
+
       </div>
-    </div>
+    </>
   )
 }
+
