@@ -1,151 +1,188 @@
-
 import { useEffect, useState } from "react"
+
 import {
   getTasks,
   createTask,
   deleteTask,
   toggleTask,
+  updateTask,
 } from "../services/taskService"
 
 import Navbar from "../components/Navbar"
 import StatsCards from "../components/StatsCards"
+import TaskCard from "../components/TaskCard"
+import SearchBar from "../components/SearchBar"
+import FilterTabs from "../components/FilterTabs"
+import TaskForm from "../components/TaskForm"
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState<any[]>([])
+
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [priority, setPriority] = useState("Medium")
+
+  const [search, setSearch] = useState("")
+  const [filter, setFilter] = useState("all")
+
+  const [editId, setEditId] = useState<number | null>(null)
 
   const loadTasks = async () => {
-    const data = await getTasks()
-    setTasks(data)
+    try {
+      const data = await getTasks()
+      setTasks(data)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   useEffect(() => {
     loadTasks()
   }, [])
 
-  const handleCreate = async () => {
-    if (!title) return
+  const handleCreateOrUpdate = async () => {
+    if (!title.trim()) return
 
-    await createTask(title, description)
+    try {
+      if (editId !== null) {
+        const existingTask = tasks.find((t) => t.id === editId)
 
-    setTitle("")
-    setDescription("")
+        await updateTask(
+          editId,
+          title,
+          description,
+          existingTask?.completed ?? false,
+          priority
+        )
+      } else {
+        await createTask(title, description, priority)
+      }
 
-    loadTasks()
+      setTitle("")
+      setDescription("")
+      setPriority("Medium")
+      setEditId(null)
+
+      loadTasks()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleEdit = (task: any) => {
+    setEditId(task.id)
+    setTitle(task.title)
+    setDescription(task.description)
+    setPriority(task.priority || "Medium")
+
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const handleDelete = async (id: number) => {
-    await deleteTask(id)
-    loadTasks()
+    try {
+      await deleteTask(id)
+      loadTasks()
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   const handleToggle = async (id: number) => {
-    await toggleTask(id)
-    loadTasks()
+    try {
+      await toggleTask(id)
+      loadTasks()
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   const handleLogout = () => {
     localStorage.removeItem("token")
-    window.location.href = "/"
+    window.location.href = "/login"
   }
 
   const total = tasks.length
-  const completed = tasks.filter((task) => task.completed).length
+  const completed = tasks.filter((t) => t.completed).length
   const pending = total - completed
 
+  let filteredTasks = tasks.filter((task) => {
+    const q = search.toLowerCase()
+
+    return (
+      task.title.toLowerCase().includes(q) ||
+      task.description.toLowerCase().includes(q)
+    )
+  })
+
+  if (filter === "pending") {
+    filteredTasks = filteredTasks.filter((t) => !t.completed)
+  }
+
+  if (filter === "completed") {
+    filteredTasks = filteredTasks.filter((t) => t.completed)
+  }
+
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+
       <Navbar onLogout={handleLogout} />
 
-      <div className="max-w-6xl mx-auto p-6">
+      {/* MAIN CONTAINER */}
+      <div className="max-w-6xl mx-auto p-6 text-gray-900 dark:text-gray-100">
 
-        <StatsCards
-          total={total}
-          completed={completed}
-          pending={pending}
-        />
+        <StatsCards total={total} completed={completed} pending={pending} />
 
         <h1 className="text-3xl font-bold mb-6">
           My Tasks
         </h1>
 
-        {/* CREATE TASK */}
+        <SearchBar search={search} setSearch={setSearch} />
 
-        <div className="bg-white shadow rounded-lg p-6 mb-8">
+        <FilterTabs filter={filter} setFilter={setFilter} />
 
-          <input
-            className="w-full border rounded p-3 mb-3"
-            placeholder="Task title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+        <TaskForm
+          title={title}
+          description={description}
+          priority={priority}
+          isEditing={editId !== null}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onPriorityChange={setPriority}
+          onSubmit={handleCreateOrUpdate}
+          onCancel={() => {
+            setEditId(null)
+            setTitle("")
+            setDescription("")
+            setPriority("Medium")
+          }}
+        />
 
-          <input
-            className="w-full border rounded p-3 mb-3"
-            placeholder="Task description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <button
-            onClick={handleCreate}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded"
-          >
-            Add Task
-          </button>
-
-        </div>
-
-        {/* TASKS */}
-
+        {/* TASK LIST */}
         <div className="space-y-4">
 
-          {tasks.map((task) => (
-
-            <div
-              key={task.id}
-              className="bg-white shadow rounded-lg p-5 flex justify-between items-center"
-            >
-
-              <div>
-
-                <h2 className="text-lg font-semibold">
-                  {task.title} {task.completed && "✅"}
-                </h2>
-
-                <p className="text-gray-600">
-                  {task.description}
-                </p>
-
-              </div>
-
-              <div className="space-x-2">
-
-                <button
-                  onClick={() => handleToggle(task.id)}
-                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded"
-                >
-                  Toggle
-                </button>
-
-                <button
-                  onClick={() => handleDelete(task.id)}
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded"
-                >
-                  Delete
-                </button>
-
-              </div>
-
+          {filteredTasks.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-10 text-center text-gray-500 dark:text-gray-300">
+              No tasks found.
             </div>
-
-          ))}
+          ) : (
+            filteredTasks.map((task) => (
+              <div
+                key={task.id}
+                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors"
+              >
+                <TaskCard
+                  task={task}
+                  onToggle={handleToggle}
+                  onDelete={handleDelete}
+                  onEdit={handleEdit}
+                />
+              </div>
+            ))
+          )}
 
         </div>
 
       </div>
-    </>
+    </div>
   )
 }
-
