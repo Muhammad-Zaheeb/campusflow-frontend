@@ -1,73 +1,116 @@
-# React + TypeScript + Vite
+# 🎓 CampusFlow Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, responsive frontend for **CampusFlow**, a student productivity and task management application.
 
-Currently, two official plugins are available:
+Built with **React**, **TypeScript**, and **Vite**, the application provides a clean interface for students to manage their daily tasks, assignments, and deadlines.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🌐 Live Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Frontend:** https://campusflow-frontend-blond.vercel.app
 
-## Expanding the ESLint configuration
+**Backend API:** https://campusflow-uoi7.onrender.com
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## ✨ Features
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+* 🔐 User Registration & Login
+* 🛡 Protected Dashboard
+* ➕ Create Tasks
+* ✏ Edit Tasks
+* 🗑 Delete Tasks
+* ✅ Mark Tasks as Completed
+* 🔥 Overdue Tasks
+* 📅 Upcoming Tasks
+* ⭐ Task Priority (High / Medium / Low)
+* 🔍 Search Tasks
+* 📱 Mobile Responsive Design
+* ⚡ Fast React + Vite Performance
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## 🛠 Tech Stack
+
+* React 19
+* TypeScript
+* Vite
+* Axios
+* React Router
+* Tailwind CSS
+* REST API
+* Git & GitHub
+* Vercel
+
+---
+
+## 📁 Project Structure
+
+```text
+src/
+│
+├── api/
+├── components/
+├── pages/
+├── services/
+├── assets/
+├── App.tsx
+└── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ⚙️ Installation
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Clone the repository
+
+```bash
+git clone <repository-url>
 ```
+
+Install dependencies
+
+```bash
+npm install
+```
+
+Run the development server
+
+```bash
+npm run dev
+```
+
+Build for production
+
+```bash
+npm run build
+```
+
+---
+
+## 🚀 Deployment
+
+Frontend is deployed on **Vercel**.
+
+Backend is deployed on **Render**.
+
+---
+
+## 🔮 Future Improvements
+
+* Calendar View
+* Task Categories
+* Password Reset
+* Email Verification
+* Notifications
+* Dark / Light Theme
+* Analytics Dashboard
+
+---
+
+## 👨‍💻 Author
+
+**Muhammad Zaheeb**
+
+CampusFlow was built as a portfolio project to demonstrate modern full-stack web development using React, TypeScript, FastAPI, PostgreSQL, SQLAlchemy, JWT Authentication, and cloud deployment.
