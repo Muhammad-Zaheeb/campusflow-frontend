@@ -14,7 +14,6 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// auto logout if token invalid
 api.interceptors.response.use(
   (res) => res,
   (err) => {
