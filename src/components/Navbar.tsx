@@ -5,15 +5,19 @@ export default function Navbar() {
   }
 
   return (
-    <div className="flex justify-between items-center p-4 bg-gray-900 border-b border-gray-800">
-      <h1 className="text-xl font-bold">CampusFlow</h1>
+    <div className="flex justify-between items-center px-4 sm:px-6 py-4 bg-gray-950 border-b border-gray-800">
+
+      <h1 className="text-lg sm:text-xl font-bold">
+        CampusFlow
+      </h1>
 
       <button
         onClick={logout}
-        className="bg-red-600 px-4 py-2 rounded hover:bg-red-700"
+        className="bg-red-600 px-3 py-1 rounded text-sm"
       >
         Logout
       </button>
+
     </div>
   )
 }

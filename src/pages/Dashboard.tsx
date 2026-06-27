@@ -35,7 +35,7 @@ export default function Dashboard() {
     loadTasks()
   }, [])
 
-  // ---------------- CREATE / UPDATE ----------------
+  // ---------------- CRUD ----------------
   const handleSubmit = async () => {
     if (!title.trim()) return
 
@@ -54,24 +54,16 @@ export default function Dashboard() {
       await createTask(title, description, priority, dueDate)
     }
 
+    resetForm()
+    loadTasks()
+  }
+
+  const resetForm = () => {
     setTitle("")
     setDescription("")
     setPriority("Medium")
     setDueDate("")
     setEditId(null)
-
-    loadTasks()
-  }
-
-  // ---------------- ACTIONS ----------------
-  const handleDelete = async (id: number) => {
-    await deleteTask(id)
-    loadTasks()
-  }
-
-  const handleToggle = async (id: number) => {
-    await toggleTask(id)
-    loadTasks()
   }
 
   const handleEdit = (task: any) => {
@@ -83,15 +75,30 @@ export default function Dashboard() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // ---------------- FILTERS ----------------
+  const handleDelete = async (id: number) => {
+    await deleteTask(id)
+    loadTasks()
+  }
+
+  const handleToggle = async (id: number) => {
+    await toggleTask(id)
+    loadTasks()
+  }
+
+  // ---------------- DATE LOGIC ----------------
   const today = new Date()
 
-  const isOverdue = (t: any) =>
-    !t.completed && t.due_date && new Date(t.due_date) < today
+  const isOverdue = (task: any) =>
+    !task.completed &&
+    task.due_date &&
+    new Date(task.due_date) < today
 
-  const isUpcoming = (t: any) =>
-    !t.completed && t.due_date && new Date(t.due_date) >= today
+  const isUpcoming = (task: any) =>
+    !task.completed &&
+    task.due_date &&
+    new Date(task.due_date) >= today
 
+  // ---------------- FILTER ----------------
   const filtered = tasks.filter((t) =>
     t.title.toLowerCase().includes(search.toLowerCase())
   )
@@ -100,24 +107,21 @@ export default function Dashboard() {
   const upcoming = filtered.filter(isUpcoming)
   const completed = filtered.filter((t) => t.completed)
 
-  const total = tasks.length
-
-  // ---------------- UI ----------------
   return (
     <div className="min-h-screen bg-gray-950 text-white">
 
       <Navbar />
 
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
 
         <StatsCards
-          total={total}
+          total={tasks.length}
           completed={completed.length}
-          pending={total - completed.length}
+          pending={tasks.length - completed.length}
         />
 
-        <h1 className="text-3xl font-bold mb-6">
-          CampusFlow Dashboard
+        <h1 className="text-2xl sm:text-3xl font-bold mt-6 mb-4">
+          🎓 CampusFlow Dashboard
         </h1>
 
         <SearchBar search={search} setSearch={setSearch} />
@@ -133,49 +137,82 @@ export default function Dashboard() {
           onPriorityChange={setPriority}
           onDueDateChange={setDueDate}
           onSubmit={handleSubmit}
-          onCancel={() => {
-            setEditId(null)
-            setTitle("")
-            setDescription("")
-            setPriority("Medium")
-            setDueDate("")
-          }}
+          onCancel={resetForm}
         />
 
-        {/* OVERDUE */}
-        <Section title="🔥 Overdue Tasks" tasks={overdue} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
+        {/* 🔥 OVERDUE */}
+        <Section title="🔥 Overdue Tasks" color="red">
+          {overdue.length === 0 ? (
+            <Empty text="No overdue tasks 🎉" />
+          ) : (
+            overdue.map((t) => (
+              <TaskCard
+                key={t.id}
+                task={t}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            ))
+          )}
+        </Section>
 
-        {/* UPCOMING */}
-        <Section title="📅 Upcoming Tasks" tasks={upcoming} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
+        {/* 📅 UPCOMING */}
+        <Section title="📅 Upcoming Tasks" color="yellow">
+          {upcoming.length === 0 ? (
+            <Empty text="No upcoming tasks" />
+          ) : (
+            upcoming.map((t) => (
+              <TaskCard
+                key={t.id}
+                task={t}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            ))
+          )}
+        </Section>
 
-        {/* COMPLETED */}
-        <Section title="✅ Completed Tasks" tasks={completed} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
+        {/* ✅ COMPLETED */}
+        <Section title="✅ Completed Tasks" color="green">
+          {completed.length === 0 ? (
+            <Empty text="No completed tasks yet" />
+          ) : (
+            completed.map((t) => (
+              <TaskCard
+                key={t.id}
+                task={t}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
+            ))
+          )}
+        </Section>
 
       </div>
     </div>
   )
 }
 
-function Section({ title, tasks, onToggle, onDelete, onEdit }: any) {
+// ---------------- UI HELPERS ----------------
+
+function Section({ title, children }: any) {
   return (
     <div className="mt-8">
-      <h2 className="text-xl font-semibold mb-3">{title}</h2>
+      <h2 className="text-lg sm:text-xl font-semibold mb-3">
+        {title}
+      </h2>
+      <div className="space-y-3">{children}</div>
+    </div>
+  )
+}
 
-      <div className="space-y-3">
-        {tasks.length === 0 ? (
-          <p className="text-gray-500">No tasks</p>
-        ) : (
-          tasks.map((t: any) => (
-            <TaskCard
-              key={t.id}
-              task={t}
-              onToggle={onToggle}
-              onDelete={onDelete}
-              onEdit={onEdit}
-            />
-          ))
-        )}
-      </div>
+function Empty({ text }: { text: string }) {
+  return (
+    <div className="p-4 border border-gray-800 rounded-lg text-gray-500 text-sm">
+      {text}
     </div>
   )
 }
