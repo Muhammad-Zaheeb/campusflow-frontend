@@ -55,7 +55,7 @@ export default function Dashboard() {
     }
 
     resetForm()
-    loadTasks()
+    loadTasks() // 🔥 IMPORTANT REFRESH
   }
 
   const resetForm = () => {
@@ -85,18 +85,31 @@ export default function Dashboard() {
     loadTasks()
   }
 
-  // ---------------- DATE LOGIC ----------------
+  // ---------------- SAFE DATE LOGIC (FIXED) ----------------
+
+  const normalizeDate = (dateStr: string) => {
+    if (!dateStr) return null
+    const d = new Date(dateStr)
+    d.setHours(0, 0, 0, 0)
+    return d
+  }
+
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
-  const isOverdue = (task: any) =>
-    !task.completed &&
-    task.due_date &&
-    new Date(task.due_date) < today
+  const isOverdue = (task: any) => {
+    const taskDate = normalizeDate(task.due_date)
+    if (!taskDate) return false
 
-  const isUpcoming = (task: any) =>
-    !task.completed &&
-    task.due_date &&
-    new Date(task.due_date) >= today
+    return !task.completed && taskDate < today
+  }
+
+  const isUpcoming = (task: any) => {
+    const taskDate = normalizeDate(task.due_date)
+    if (!taskDate) return false
+
+    return !task.completed && taskDate >= today
+  }
 
   // ---------------- FILTER ----------------
   const filtered = tasks.filter((t) =>
@@ -141,7 +154,7 @@ export default function Dashboard() {
         />
 
         {/* 🔥 OVERDUE */}
-        <Section title="🔥 Overdue Tasks" color="red">
+        <Section title="🔥 Overdue Tasks">
           {overdue.length === 0 ? (
             <Empty text="No overdue tasks 🎉" />
           ) : (
@@ -158,7 +171,7 @@ export default function Dashboard() {
         </Section>
 
         {/* 📅 UPCOMING */}
-        <Section title="📅 Upcoming Tasks" color="yellow">
+        <Section title="📅 Upcoming Tasks">
           {upcoming.length === 0 ? (
             <Empty text="No upcoming tasks" />
           ) : (
@@ -175,7 +188,7 @@ export default function Dashboard() {
         </Section>
 
         {/* ✅ COMPLETED */}
-        <Section title="✅ Completed Tasks" color="green">
+        <Section title="✅ Completed Tasks">
           {completed.length === 0 ? (
             <Empty text="No completed tasks yet" />
           ) : (
