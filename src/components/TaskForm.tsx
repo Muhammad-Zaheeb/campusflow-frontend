@@ -2,11 +2,13 @@ type Props = {
   title: string
   description: string
   priority: string
+  dueDate: string
   isEditing: boolean
 
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
   onPriorityChange: (value: string) => void
+  onDueDateChange: (value: string) => void
 
   onSubmit: () => void
   onCancel: () => void
@@ -16,11 +18,13 @@ export default function TaskForm({
   title,
   description,
   priority,
+  dueDate,
   isEditing,
 
   onTitleChange,
   onDescriptionChange,
   onPriorityChange,
+  onDueDateChange,
 
   onSubmit,
   onCancel,
@@ -48,7 +52,7 @@ export default function TaskForm({
       />
 
       <select
-        className="w-full border rounded-lg p-3 mb-4
+        className="w-full border rounded-lg p-3 mb-3
         bg-white dark:bg-gray-900 text-gray-900 dark:text-white
         border-gray-300 dark:border-gray-700"
         value={priority}
@@ -58,6 +62,15 @@ export default function TaskForm({
         <option value="Medium">🟡 Medium Priority</option>
         <option value="High">🔴 High Priority</option>
       </select>
+
+      <input
+        type="date"
+        value={dueDate}
+        onChange={(e) => onDueDateChange(e.target.value)}
+        className="w-full border rounded-lg p-3 mb-4
+        bg-white dark:bg-gray-900 text-gray-900 dark:text-white
+        border-gray-300 dark:border-gray-700"
+      />
 
       <div className="flex gap-3">
 

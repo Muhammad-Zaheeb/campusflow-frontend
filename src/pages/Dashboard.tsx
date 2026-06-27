@@ -12,7 +12,6 @@ import Navbar from "../components/Navbar"
 import StatsCards from "../components/StatsCards"
 import TaskCard from "../components/TaskCard"
 import SearchBar from "../components/SearchBar"
-import FilterTabs from "../components/FilterTabs"
 import TaskForm from "../components/TaskForm"
 
 export default function Dashboard() {
@@ -21,52 +20,58 @@ export default function Dashboard() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState("Medium")
+  const [dueDate, setDueDate] = useState("")
 
   const [search, setSearch] = useState("")
-  const [filter, setFilter] = useState("all")
-
   const [editId, setEditId] = useState<number | null>(null)
 
+  // ---------------- LOAD ----------------
   const loadTasks = async () => {
-    try {
-      const data = await getTasks()
-      setTasks(data)
-    } catch (error) {
-      console.error(error)
-    }
+    const data = await getTasks()
+    setTasks(data)
   }
 
   useEffect(() => {
     loadTasks()
   }, [])
 
-  const handleCreateOrUpdate = async () => {
+  // ---------------- CREATE / UPDATE ----------------
+  const handleSubmit = async () => {
     if (!title.trim()) return
 
-    try {
-      if (editId !== null) {
-        const existingTask = tasks.find((t) => t.id === editId)
+    if (editId !== null) {
+      const existing = tasks.find((t) => t.id === editId)
 
-        await updateTask(
-          editId,
-          title,
-          description,
-          existingTask?.completed ?? false,
-          priority
-        )
-      } else {
-        await createTask(title, description, priority)
-      }
-
-      setTitle("")
-      setDescription("")
-      setPriority("Medium")
-      setEditId(null)
-
-      loadTasks()
-    } catch (error) {
-      console.error(error)
+      await updateTask(
+        editId,
+        title,
+        description,
+        existing?.completed ?? false,
+        priority,
+        dueDate
+      )
+    } else {
+      await createTask(title, description, priority, dueDate)
     }
+
+    setTitle("")
+    setDescription("")
+    setPriority("Medium")
+    setDueDate("")
+    setEditId(null)
+
+    loadTasks()
+  }
+
+  // ---------------- ACTIONS ----------------
+  const handleDelete = async (id: number) => {
+    await deleteTask(id)
+    loadTasks()
+  }
+
+  const handleToggle = async (id: number) => {
+    await toggleTask(id)
+    loadTasks()
   }
 
   const handleEdit = (task: any) => {
@@ -74,114 +79,102 @@ export default function Dashboard() {
     setTitle(task.title)
     setDescription(task.description)
     setPriority(task.priority || "Medium")
-
+    setDueDate(task.due_date || "")
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteTask(id)
-      loadTasks()
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  // ---------------- FILTERS ----------------
+  const today = new Date()
 
-  const handleToggle = async (id: number) => {
-    try {
-      await toggleTask(id)
-      loadTasks()
-    } catch (error) {
-      console.error(error)
-    }
-  }
+  const isOverdue = (t: any) =>
+    !t.completed && t.due_date && new Date(t.due_date) < today
 
-  const handleLogout = () => {
-    localStorage.removeItem("token")
-    window.location.href = "/login"
-  }
+  const isUpcoming = (t: any) =>
+    !t.completed && t.due_date && new Date(t.due_date) >= today
+
+  const filtered = tasks.filter((t) =>
+    t.title.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const overdue = filtered.filter(isOverdue)
+  const upcoming = filtered.filter(isUpcoming)
+  const completed = filtered.filter((t) => t.completed)
 
   const total = tasks.length
-  const completed = tasks.filter((t) => t.completed).length
-  const pending = total - completed
 
-  let filteredTasks = tasks.filter((task) => {
-    const q = search.toLowerCase()
-
-    return (
-      task.title.toLowerCase().includes(q) ||
-      task.description.toLowerCase().includes(q)
-    )
-  })
-
-  if (filter === "pending") {
-    filteredTasks = filteredTasks.filter((t) => !t.completed)
-  }
-
-  if (filter === "completed") {
-    filteredTasks = filteredTasks.filter((t) => t.completed)
-  }
-
+  // ---------------- UI ----------------
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen bg-gray-950 text-white">
 
-      <Navbar onLogout={handleLogout} />
+      <Navbar />
 
-      {/* MAIN CONTAINER */}
-      <div className="max-w-6xl mx-auto p-6 text-gray-900 dark:text-gray-100">
+      <div className="max-w-6xl mx-auto p-6">
 
-        <StatsCards total={total} completed={completed} pending={pending} />
+        <StatsCards
+          total={total}
+          completed={completed.length}
+          pending={total - completed.length}
+        />
 
         <h1 className="text-3xl font-bold mb-6">
-          My Tasks
+          CampusFlow Dashboard
         </h1>
 
         <SearchBar search={search} setSearch={setSearch} />
-
-        <FilterTabs filter={filter} setFilter={setFilter} />
 
         <TaskForm
           title={title}
           description={description}
           priority={priority}
+          dueDate={dueDate}
           isEditing={editId !== null}
           onTitleChange={setTitle}
           onDescriptionChange={setDescription}
           onPriorityChange={setPriority}
-          onSubmit={handleCreateOrUpdate}
+          onDueDateChange={setDueDate}
+          onSubmit={handleSubmit}
           onCancel={() => {
             setEditId(null)
             setTitle("")
             setDescription("")
             setPriority("Medium")
+            setDueDate("")
           }}
         />
 
-        {/* TASK LIST */}
-        <div className="space-y-4">
+        {/* OVERDUE */}
+        <Section title="🔥 Overdue Tasks" tasks={overdue} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
 
-          {filteredTasks.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-10 text-center text-gray-500 dark:text-gray-300">
-              No tasks found.
-            </div>
-          ) : (
-            filteredTasks.map((task) => (
-              <div
-                key={task.id}
-                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow transition-colors"
-              >
-                <TaskCard
-                  task={task}
-                  onToggle={handleToggle}
-                  onDelete={handleDelete}
-                  onEdit={handleEdit}
-                />
-              </div>
-            ))
-          )}
+        {/* UPCOMING */}
+        <Section title="📅 Upcoming Tasks" tasks={upcoming} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
 
-        </div>
+        {/* COMPLETED */}
+        <Section title="✅ Completed Tasks" tasks={completed} onToggle={handleToggle} onDelete={handleDelete} onEdit={handleEdit} />
 
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, tasks, onToggle, onDelete, onEdit }: any) {
+  return (
+    <div className="mt-8">
+      <h2 className="text-xl font-semibold mb-3">{title}</h2>
+
+      <div className="space-y-3">
+        {tasks.length === 0 ? (
+          <p className="text-gray-500">No tasks</p>
+        ) : (
+          tasks.map((t: any) => (
+            <TaskCard
+              key={t.id}
+              task={t}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onEdit={onEdit}
+            />
+          ))
+        )}
       </div>
     </div>
   )

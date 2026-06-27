@@ -8,12 +8,14 @@ export const getTasks = async () => {
 export const createTask = async (
   title: string,
   description: string,
-  priority: string
+  priority: string,
+  dueDate: string
 ) => {
   const res = await api.post("/tasks", {
     title,
     description,
     priority,
+    due_date: dueDate || null,
   })
 
   return res.data
@@ -34,13 +36,15 @@ export const updateTask = async (
   title: string,
   description: string,
   completed: boolean,
-  priority: string
+  priority: string,
+  dueDate: string
 ) => {
   const res = await api.put(`/tasks/${id}`, {
     title,
     description,
     completed,
     priority,
+    due_date: dueDate || null,
   })
 
   return res.data
