@@ -1,51 +1,26 @@
 import api from "../api/axios"
+import type { Task, TaskInput } from "../types"
 
 export const getTasks = async () => {
-  const res = await api.get("/tasks")
+  const res = await api.get<Task[]>("/tasks")
   return res.data
 }
 
-export const createTask = async (
-  title: string,
-  description: string,
-  priority: string,
-  dueDate: string
-) => {
-  const res = await api.post("/tasks", {
-    title,
-    description,
-    priority,
-    due_date: dueDate || null,
-  })
-
+export const createTask = async (input: TaskInput) => {
+  const res = await api.post<Task>("/tasks", input)
   return res.data
 }
 
-export const deleteTask = async (id: number) => {
-  const res = await api.delete(`/tasks/${id}`)
+export const updateTask = async (id: number, changes: Partial<TaskInput & { completed: boolean }>) => {
+  const res = await api.put<Task>(`/tasks/${id}`, changes)
   return res.data
 }
 
 export const toggleTask = async (id: number) => {
-  const res = await api.patch(`/tasks/${id}/toggle`)
+  const res = await api.patch<Task>(`/tasks/${id}/toggle`)
   return res.data
 }
 
-export const updateTask = async (
-  id: number,
-  title: string,
-  description: string,
-  completed: boolean,
-  priority: string,
-  dueDate: string
-) => {
-  const res = await api.put(`/tasks/${id}`, {
-    title,
-    description,
-    completed,
-    priority,
-    due_date: dueDate || null,
-  })
-
-  return res.data
+export const deleteTask = async (id: number) => {
+  await api.delete(`/tasks/${id}`)
 }

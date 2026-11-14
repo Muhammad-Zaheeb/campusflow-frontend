@@ -1,231 +1,337 @@
-import { useEffect, useState } from "react"
-
-import {
-  getTasks,
-  createTask,
-  deleteTask,
-  toggleTask,
-  updateTask,
-} from "../services/taskService"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import toast from "react-hot-toast"
+import { ClipboardList, Plus, SearchX } from "lucide-react"
 
 import Navbar from "../components/Navbar"
 import StatsCards from "../components/StatsCards"
 import TaskCard from "../components/TaskCard"
-import SearchBar from "../components/SearchBar"
-import TaskForm from "../components/TaskForm"
+import TaskFormModal from "../components/TaskFormModal"
+import ConfirmDialog from "../components/ConfirmDialog"
+import Toolbar, { type Filter, type Sort } from "../components/Toolbar"
+import EmptyState from "../components/EmptyState"
+import TaskSkeleton from "../components/TaskSkeleton"
+import SlowServerHint from "../components/SlowServerHint"
+
+import { createTask, deleteTask, getTasks, toggleTask, updateTask } from "../services/taskService"
+import { getMe } from "../services/authService"
+import { getErrorMessage } from "../utils/errors"
+import { isOverdue, parseDate } from "../utils/date"
+import type { Task, TaskInput } from "../types"
+
+const priorityRank = { High: 0, Medium: 1, Low: 2 } as const
+
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 17) return "Good afternoon"
+  return "Good evening"
+}
+
+function sortTasks(tasks: Task[], sort: Sort): Task[] {
+  const byDue = (a: Task, b: Task) => {
+    const da = parseDate(a.due_date)?.getTime() ?? Infinity
+    const db = parseDate(b.due_date)?.getTime() ?? Infinity
+    return da - db
+  }
+  const copy = [...tasks]
+  if (sort === "newest") return copy.sort((a, b) => b.id - a.id)
+  if (sort === "priority")
+    return copy.sort((a, b) => (priorityRank[a.priority] ?? 1) - (priorityRank[b.priority] ?? 1) || byDue(a, b))
+  return copy.sort((a, b) => byDue(a, b) || (priorityRank[a.priority] ?? 1) - (priorityRank[b.priority] ?? 1))
+}
 
 export default function Dashboard() {
-  const [tasks, setTasks] = useState<any[]>([])
-
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [priority, setPriority] = useState("Medium")
-  const [dueDate, setDueDate] = useState("")
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [userName, setUserName] = useState<string>()
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState("")
 
   const [search, setSearch] = useState("")
-  const [editId, setEditId] = useState<number | null>(null)
+  const [filter, setFilter] = useState<Filter>("all")
+  const [sort, setSort] = useState<Sort>("due")
+
+  const [formOpen, setFormOpen] = useState(false)
+  const [editing, setEditing] = useState<Task | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const [toDelete, setToDelete] = useState<Task | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // ---------------- LOAD ----------------
-  const loadTasks = async () => {
-    const data = await getTasks()
-    setTasks(data)
-  }
-
-  useEffect(() => {
-    loadTasks()
+  const load = useCallback(async () => {
+    try {
+      const [taskList, me] = await Promise.all([getTasks(), getMe().catch(() => null)])
+      setTasks(taskList)
+      if (me) setUserName(me.name)
+    } catch (err) {
+      setLoadError(getErrorMessage(err, "Couldn't load your tasks"))
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  // ---------------- CRUD ----------------
-  const handleSubmit = async () => {
-    if (!title.trim()) return
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on mount; state is only set after the request resolves
+    load()
+  }, [load])
 
-    if (editId !== null) {
-      const existing = tasks.find((t) => t.id === editId)
+  const retry = () => {
+    setLoading(true)
+    setLoadError("")
+    load()
+  }
 
-      await updateTask(
-        editId,
-        title,
-        description,
-        existing?.completed ?? false,
-        priority,
-        dueDate
-      )
-    } else {
-      await createTask(title, description, priority, dueDate)
+  // ---------------- ACTIONS ----------------
+  const openNew = () => {
+    setEditing(null)
+    setFormOpen(true)
+  }
+
+  // Press "n" anywhere (outside a text field) to add a task
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+      if (e.key.toLowerCase() === "n" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey && !formOpen && !toDelete) {
+        e.preventDefault()
+        setEditing(null)
+        setFormOpen(true)
+      }
     }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [formOpen, toDelete])
 
-    resetForm()
-    loadTasks() // 🔥 IMPORTANT REFRESH
+  const openEdit = (task: Task) => {
+    setEditing(task)
+    setFormOpen(true)
   }
 
-  const resetForm = () => {
-    setTitle("")
-    setDescription("")
-    setPriority("Medium")
-    setDueDate("")
-    setEditId(null)
+  const closeForm = useCallback(() => {
+    if (!saving) setFormOpen(false)
+  }, [saving])
+
+  const handleSave = async (input: TaskInput) => {
+    setSaving(true)
+    try {
+      if (editing) {
+        const updated = await updateTask(editing.id, input)
+        setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+        toast.success("Task updated")
+      } else {
+        const created = await createTask(input)
+        setTasks((prev) => [created, ...prev])
+        toast.success("Task added")
+      }
+      setFormOpen(false)
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Couldn't save the task"))
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleEdit = (task: any) => {
-    setEditId(task.id)
-    setTitle(task.title)
-    setDescription(task.description)
-    setPriority(task.priority || "Medium")
-    setDueDate(task.due_date || "")
-    window.scrollTo({ top: 0, behavior: "smooth" })
+  const handleToggle = async (task: Task) => {
+    // Update the screen immediately, then roll back if the server fails
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, completed: !t.completed } : t)))
+    try {
+      const updated = await toggleTask(task.id)
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      if (updated.completed) toast.success("Nice work! Task completed 🎉")
+    } catch (err) {
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)))
+      toast.error(getErrorMessage(err, "Couldn't update the task"))
+    }
   }
 
-  const handleDelete = async (id: number) => {
-    await deleteTask(id)
-    loadTasks()
+  const confirmDelete = async () => {
+    if (!toDelete) return
+    setDeleting(true)
+    try {
+      await deleteTask(toDelete.id)
+      setTasks((prev) => prev.filter((t) => t.id !== toDelete.id))
+      toast.success("Task deleted")
+      setToDelete(null)
+    } catch (err) {
+      toast.error(getErrorMessage(err, "Couldn't delete the task"))
+    } finally {
+      setDeleting(false)
+    }
   }
 
-  const handleToggle = async (id: number) => {
-    await toggleTask(id)
-    loadTasks()
+  // ---------------- DERIVED DATA ----------------
+  const stats = useMemo(() => {
+    const completed = tasks.filter((t) => t.completed).length
+    const overdue = tasks.filter(isOverdue).length
+    return { total: tasks.length, completed, pending: tasks.length - completed, overdue }
+  }, [tasks])
+
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return tasks
+    return tasks.filter((t) => t.title.toLowerCase().includes(q) || (t.description ?? "").toLowerCase().includes(q))
+  }, [tasks, search])
+
+  const counts: Record<Filter, number> = {
+    all: searched.length,
+    pending: searched.filter((t) => !t.completed).length,
+    overdue: searched.filter(isOverdue).length,
+    completed: searched.filter((t) => t.completed).length,
   }
 
-  // ---------------- SAFE DATE LOGIC (FIXED) ----------------
+  const visible = useMemo(() => {
+    const filtered = searched.filter((t) => {
+      if (filter === "pending") return !t.completed
+      if (filter === "completed") return t.completed
+      if (filter === "overdue") return isOverdue(t)
+      return true
+    })
+    return sortTasks(filtered, sort)
+  }, [searched, filter, sort])
 
-  const normalizeDate = (dateStr: string) => {
-    if (!dateStr) return null
-    const d = new Date(dateStr)
-    d.setHours(0, 0, 0, 0)
-    return d
-  }
+  const todo = visible.filter((t) => !t.completed)
+  const done = visible.filter((t) => t.completed)
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const firstName = userName?.split(" ")[0]
+  const today = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })
 
-  const isOverdue = (task: any) => {
-    const taskDate = normalizeDate(task.due_date)
-    if (!taskDate) return false
+  const cardProps = { onToggle: handleToggle, onEdit: openEdit, onDelete: setToDelete }
 
-    return !task.completed && taskDate < today
-  }
-
-  const isUpcoming = (task: any) => {
-    const taskDate = normalizeDate(task.due_date)
-    if (!taskDate) return false
-
-    return !task.completed && taskDate >= today
-  }
-
-  // ---------------- FILTER ----------------
-  const filtered = tasks.filter((t) =>
-    t.title.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const overdue = filtered.filter(isOverdue)
-  const upcoming = filtered.filter(isUpcoming)
-  const completed = filtered.filter((t) => t.completed)
-
+  // ---------------- RENDER ----------------
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen">
+      <Navbar userName={userName} />
 
-      <Navbar />
+      <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{today}</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+              {greeting()}
+              {firstName ? `, ${firstName}` : ""} 👋
+            </h1>
+            {!loading && !loadError && (
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {stats.overdue > 0
+                  ? `You have ${stats.overdue} overdue ${stats.overdue === 1 ? "task" : "tasks"}. Let's catch up.`
+                  : stats.pending > 0
+                    ? `${stats.pending} ${stats.pending === 1 ? "task" : "tasks"} to go. You're on track.`
+                    : "You're all caught up."}
+              </p>
+            )}
+          </div>
+          <button type="button" className="btn-primary self-start sm:self-auto" onClick={openNew} title="New task (N)">
+            <Plus size={18} /> New task
+          </button>
+        </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <StatsCards {...stats} />
 
-        <StatsCards
-          total={tasks.length}
-          completed={completed.length}
-          pending={tasks.length - completed.length}
+        <Toolbar
+          search={search}
+          onSearch={setSearch}
+          filter={filter}
+          onFilter={setFilter}
+          sort={sort}
+          onSort={setSort}
+          counts={counts}
         />
 
-        <h1 className="text-2xl sm:text-3xl font-bold mt-6 mb-4">
-          🎓 CampusFlow Dashboard
-        </h1>
+        {loading ? (
+          <div>
+            <TaskSkeleton />
+            {loading && <SlowServerHint />}
+          </div>
+        ) : loadError ? (
+          <EmptyState
+            icon={<ClipboardList size={22} />}
+            title="Couldn't load your tasks"
+            text={loadError}
+            action={
+              <button type="button" className="btn-primary" onClick={retry}>
+                Try again
+              </button>
+            }
+          />
+        ) : tasks.length === 0 ? (
+          <EmptyState
+            icon={<ClipboardList size={22} />}
+            title="No tasks yet"
+            text="Add your first assignment, quiz or project and CampusFlow will keep track of the deadline."
+            action={
+              <button type="button" className="btn-primary" onClick={openNew}>
+                <Plus size={18} /> Add your first task
+              </button>
+            }
+          />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            icon={<SearchX size={22} />}
+            title="Nothing matches"
+            text={search ? `No tasks match "${search}".` : "No tasks in this view."}
+            action={
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setSearch("")
+                  setFilter("all")
+                }}
+              >
+                Show all tasks
+              </button>
+            }
+          />
+        ) : filter === "all" ? (
+          <div className="space-y-8">
+            {todo.length > 0 && (
+              <TaskSection title="To do" count={todo.length}>
+                {todo.map((t) => (
+                  <TaskCard key={t.id} task={t} {...cardProps} />
+                ))}
+              </TaskSection>
+            )}
+            {done.length > 0 && (
+              <TaskSection title="Completed" count={done.length}>
+                {done.map((t) => (
+                  <TaskCard key={t.id} task={t} {...cardProps} />
+                ))}
+              </TaskSection>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {visible.map((t) => (
+              <TaskCard key={t.id} task={t} {...cardProps} />
+            ))}
+          </div>
+        )}
+      </main>
 
-        <SearchBar search={search} setSearch={setSearch} />
+      <TaskFormModal open={formOpen} task={editing} saving={saving} onClose={closeForm} onSave={handleSave} />
 
-        <TaskForm
-          title={title}
-          description={description}
-          priority={priority}
-          dueDate={dueDate}
-          isEditing={editId !== null}
-          onTitleChange={setTitle}
-          onDescriptionChange={setDescription}
-          onPriorityChange={setPriority}
-          onDueDateChange={setDueDate}
-          onSubmit={handleSubmit}
-          onCancel={resetForm}
-        />
-
-        {/* 🔥 OVERDUE */}
-        <Section title="🔥 Overdue Tasks">
-          {overdue.length === 0 ? (
-            <Empty text="No overdue tasks 🎉" />
-          ) : (
-            overdue.map((t) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                onToggle={handleToggle}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))
-          )}
-        </Section>
-
-        {/* 📅 UPCOMING */}
-        <Section title="📅 Upcoming Tasks">
-          {upcoming.length === 0 ? (
-            <Empty text="No upcoming tasks" />
-          ) : (
-            upcoming.map((t) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                onToggle={handleToggle}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))
-          )}
-        </Section>
-
-        {/* ✅ COMPLETED */}
-        <Section title="✅ Completed Tasks">
-          {completed.length === 0 ? (
-            <Empty text="No completed tasks yet" />
-          ) : (
-            completed.map((t) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                onToggle={handleToggle}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))
-          )}
-        </Section>
-
-      </div>
+      <ConfirmDialog
+        open={toDelete !== null}
+        title="Delete task?"
+        message={toDelete ? `"${toDelete.title}" will be permanently deleted. This can't be undone.` : ""}
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => !deleting && setToDelete(null)}
+      />
     </div>
   )
 }
 
-// ---------------- UI HELPERS ----------------
-
-function Section({ title, children }: any) {
+function TaskSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
   return (
-    <div className="mt-8">
-      <h2 className="text-lg sm:text-xl font-semibold mb-3">
+    <section>
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {title}
+        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs normal-case tracking-normal text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {count}
+        </span>
       </h2>
       <div className="space-y-3">{children}</div>
-    </div>
-  )
-}
-
-function Empty({ text }: { text: string }) {
-  return (
-    <div className="p-4 border border-gray-800 rounded-lg text-gray-500 text-sm">
-      {text}
-    </div>
+    </section>
   )
 }

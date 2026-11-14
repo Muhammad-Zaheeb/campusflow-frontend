@@ -1,40 +1,34 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
-let globalTheme: "light" | "dark" =
-  (localStorage.getItem("theme") as "light" | "dark") || "light"
+export type Theme = "light" | "dark"
 
-let listeners: ((t: "light" | "dark") => void)[] = []
-
-const setThemeGlobal = (theme: "light" | "dark") => {
-  globalTheme = theme
-  localStorage.setItem("theme", theme)
-
-  document.documentElement.classList.toggle("dark", theme === "dark")
-
-  listeners.forEach((l) => l(theme))
+function currentTheme(): Theme {
+  return document.documentElement.classList.contains("dark") ? "dark" : "light"
 }
 
+/**
+ * Light/dark theme. The initial theme is applied by a small script in index.html
+ * (saved choice, otherwise the system setting), so this hook only reads and toggles it.
+ */
 export default function useTheme() {
-  const [theme, setTheme] = useState(globalTheme)
+  const [theme, setTheme] = useState<Theme>(currentTheme)
 
+  // Keep every component using this hook in sync
   useEffect(() => {
-    const handler = (t: "light" | "dark") => setTheme(t)
-
-    listeners.push(handler)
-
-    document.documentElement.classList.toggle(
-      "dark",
-      globalTheme === "dark"
-    )
-
-    return () => {
-      listeners = listeners.filter((l) => l !== handler)
-    }
+    const observer = new MutationObserver(() => setTheme(currentTheme()))
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
+    return () => observer.disconnect()
   }, [])
 
-  const toggleTheme = () => {
-    setThemeGlobal(globalTheme === "light" ? "dark" : "light")
-  }
+  const toggleTheme = useCallback(() => {
+    const next: Theme = currentTheme() === "dark" ? "light" : "dark"
+    document.documentElement.classList.toggle("dark", next === "dark")
+    try {
+      localStorage.setItem("theme", next)
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works for this visit
+    }
+  }, [])
 
   return { theme, toggleTheme }
 }

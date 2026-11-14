@@ -1,7 +1,8 @@
 import axios from "axios"
 
+// Set VITE_API_URL in a .env file to point at a local backend (see .env.example)
 const api = axios.create({
-  baseURL: "https://campusflow-uoi7.onrender.com",
+  baseURL: import.meta.env.VITE_API_URL || "https://campusflow-uoi7.onrender.com",
 })
 
 api.interceptors.request.use((config) => {

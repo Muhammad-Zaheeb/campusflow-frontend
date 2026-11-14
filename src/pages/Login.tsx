@@ -1,29 +1,30 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import api from "../api/axios"
+import { useState, type FormEvent } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import AuthLayout from "../components/AuthLayout"
+import PasswordInput from "../components/PasswordInput"
+import SlowServerHint from "../components/SlowServerHint"
+import { loginUser } from "../services/authService"
 import { getErrorMessage } from "../utils/errors"
 
 export default function Login() {
-  const [email, setEmail] = useState("")
+  const navigate = useNavigate()
+  const location = useLocation()
+  const registeredEmail = (location.state as { email?: string } | null)?.email
+
+  const [email, setEmail] = useState(registeredEmail ?? "")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault()
-
     setLoading(true)
     setError("")
 
     try {
-      const res = await api.post("/login", {
-        email,
-        password,
-      })
-
-      localStorage.setItem("token", res.data.access_token)
-      window.location.href = "/dashboard"
-    } catch (err: any) {
+      await loginUser({ email, password })
+      navigate("/dashboard", { replace: true })
+    } catch (err) {
       setError(getErrorMessage(err, "Login failed"))
     } finally {
       setLoading(false)
@@ -31,45 +32,68 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
-
-      <form onSubmit={handleLogin} className="bg-gray-900 p-8 rounded-xl w-full max-w-sm mx-4">
-        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
-
-        {error && <p className="text-red-400 mb-3 text-center">{error}</p>}
-
-        <input
-          className="w-full p-3 mb-3 bg-gray-800 rounded"
-          type="email"
-          required
-          autoComplete="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <input
-          type="password"
-          required
-          autoComplete="current-password"
-          className="w-full p-3 mb-4 bg-gray-800 rounded"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 p-3 rounded transition"
-        >
-          {loading ? "Loading..." : "Login"}
-        </button>
-
-        <p className="text-center mt-4 text-sm text-gray-400">
-          No account? <Link className="text-blue-400" to="/register">Register</Link>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Log in to see your tasks and deadlines."
+      footer={
+        <>
+          New to CampusFlow?{" "}
+          <Link to="/register" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      {registeredEmail && !error && (
+        <p className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
+          Account created. Log in to get started.
         </p>
+      )}
+
+      <form onSubmit={handleLogin} className="space-y-4">
+        {error && (
+          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+            {error}
+          </p>
+        )}
+
+        <div>
+          <label htmlFor="email" className="label">
+            Email
+          </label>
+          <input
+            id="email"
+            className="input"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="label">
+            Password
+          </label>
+          <PasswordInput
+            id="password"
+            required
+            autoComplete="current-password"
+            placeholder="Your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus={Boolean(registeredEmail)}
+          />
+        </div>
+
+        <button type="submit" disabled={loading} className="btn-primary w-full">
+          {loading ? "Logging in…" : "Log in"}
+        </button>
       </form>
-    </div>
+
+      {loading && <SlowServerHint />}
+    </AuthLayout>
   )
 }
