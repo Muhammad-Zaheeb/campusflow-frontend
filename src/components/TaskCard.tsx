@@ -33,7 +33,7 @@ export default function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
         role="checkbox"
         aria-checked={task.completed}
         aria-label={task.completed ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
-        className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition
+        className={`relative mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition before:absolute before:-inset-2.5 before:content-['']
           focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/25 ${
             task.completed
               ? "border-emerald-500 bg-emerald-500 text-white"
