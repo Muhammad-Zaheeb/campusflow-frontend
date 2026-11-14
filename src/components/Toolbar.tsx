@@ -22,14 +22,14 @@ const tabs: { key: Filter; label: string }[] = [
 
 export default function Toolbar({ search, onSearch, filter, onFilter, sort, onSort, counts }: Props) {
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row">
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-pencil" />
           <input
             type="search"
-            className="input pl-10 pr-9"
-            placeholder="Search tasks…"
+            className="input pl-9 pr-9"
+            placeholder="Search tasks"
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             aria-label="Search tasks"
@@ -38,7 +38,7 @@ export default function Toolbar({ search, onSearch, filter, onFilter, sort, onSo
             <button
               type="button"
               onClick={() => onSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1.5 text-pencil hover:text-ink"
               aria-label="Clear search"
             >
               <X size={16} />
@@ -46,14 +46,15 @@ export default function Toolbar({ search, onSearch, filter, onFilter, sort, onSo
           )}
         </div>
 
-        <select className="input sm:w-48" value={sort} onChange={(e) => onSort(e.target.value as Sort)} aria-label="Sort tasks">
-          <option value="due">Sort: Due date</option>
-          <option value="priority">Sort: Priority</option>
-          <option value="newest">Sort: Newest first</option>
+        <select className="input sm:w-40" value={sort} onChange={(e) => onSort(e.target.value as Sort)} aria-label="Sort tasks">
+          <option value="due">By due date</option>
+          <option value="priority">By priority</option>
+          <option value="newest">Newest first</option>
         </select>
       </div>
 
-      <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Filter tasks">
+      {/* Underlined tabs, like section tabs in a notebook */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1 border-b border-rule" role="tablist" aria-label="Filter tasks">
         {tabs.map((tab) => {
           const active = filter === tab.key
           return (
@@ -63,20 +64,11 @@ export default function Toolbar({ search, onSearch, filter, onFilter, sort, onSo
               role="tab"
               aria-selected={active}
               onClick={() => onFilter(tab.key)}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-                active
-                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-                  : "text-slate-600 hover:bg-slate-200/70 dark:text-slate-400 dark:hover:bg-slate-800"
+              className={`-mb-px border-b-2 pb-2.5 pt-1 text-sm font-medium transition focus-visible:outline-none focus-visible:text-pen ${
+                active ? "border-ink text-ink" : "border-transparent text-pencil hover:text-ink"
               }`}
             >
-              {tab.label}
-              <span
-                className={`rounded-full px-1.5 text-xs ${
-                  active ? "bg-white/20 dark:bg-slate-900/15" : "bg-slate-200 dark:bg-slate-800"
-                }`}
-              >
-                {counts[tab.key]}
-              </span>
+              {tab.label} <span className="ml-0.5 tabular-nums text-pencil/70">{counts[tab.key]}</span>
             </button>
           )
         })}

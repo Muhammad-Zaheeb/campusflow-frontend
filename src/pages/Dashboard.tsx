@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import toast from "react-hot-toast"
-import { ClipboardList, Plus, SearchX } from "lucide-react"
+import { Plus } from "lucide-react"
 
 import Navbar from "../components/Navbar"
 import StatsCards from "../components/StatsCards"
@@ -15,7 +15,7 @@ import SlowServerHint from "../components/SlowServerHint"
 import { createTask, deleteTask, getTasks, toggleTask, updateTask } from "../services/taskService"
 import { getMe } from "../services/authService"
 import { getErrorMessage } from "../utils/errors"
-import { isOverdue, parseDate } from "../utils/date"
+import { isDueToday, isOverdue, parseDate } from "../utils/date"
 import type { Task, TaskInput } from "../types"
 
 const priorityRank = { High: 0, Medium: 1, Low: 2 } as const
@@ -117,7 +117,7 @@ export default function Dashboard() {
       if (editing) {
         const updated = await updateTask(editing.id, input)
         setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
-        toast.success("Task updated")
+        toast.success("Changes saved")
       } else {
         const created = await createTask(input)
         setTasks((prev) => [created, ...prev])
@@ -137,7 +137,7 @@ export default function Dashboard() {
     try {
       const updated = await toggleTask(task.id)
       setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
-      if (updated.completed) toast.success("Nice work! Task completed 🎉")
+      if (updated.completed) toast.success("Task completed")
     } catch (err) {
       setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)))
       toast.error(getErrorMessage(err, "Couldn't update the task"))
@@ -163,7 +163,8 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const completed = tasks.filter((t) => t.completed).length
     const overdue = tasks.filter(isOverdue).length
-    return { total: tasks.length, completed, pending: tasks.length - completed, overdue }
+    const dueToday = tasks.filter(isDueToday).length
+    return { total: tasks.length, completed, pending: tasks.length - completed, overdue, dueToday }
   }, [tasks])
 
   const searched = useMemo(() => {
@@ -202,30 +203,32 @@ export default function Dashboard() {
     <div className="min-h-screen">
       <Navbar userName={userName} />
 
-      <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto max-w-3xl space-y-10 px-5 py-10 sm:px-6 sm:py-14">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{today}</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="text-[28px] font-medium leading-tight tracking-[-0.025em] [text-wrap:balance] sm:text-[42px]">{today}</h1>
+            <p className="mt-2 text-pencil">
               {greeting()}
-              {firstName ? `, ${firstName}` : ""} 👋
-            </h1>
-            {!loading && !loadError && (
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {stats.overdue > 0
-                  ? `You have ${stats.overdue} overdue ${stats.overdue === 1 ? "task" : "tasks"}. Let's catch up.`
-                  : stats.pending > 0
-                    ? `${stats.pending} ${stats.pending === 1 ? "task" : "tasks"} to go. You're on track.`
-                    : "You're all caught up."}
-              </p>
-            )}
+              {firstName ? `, ${firstName}` : ""}.{" "}
+              {!loading && !loadError && (
+                <span className="text-ink">
+                  {stats.overdue > 0
+                    ? `${stats.overdue} ${stats.overdue === 1 ? "task is" : "tasks are"} overdue.`
+                    : stats.dueToday > 0
+                      ? `${stats.dueToday} due today.`
+                      : stats.pending > 0
+                        ? `${stats.pending} ${stats.pending === 1 ? "task" : "tasks"} to go.`
+                        : "Nothing left to do."}
+                </span>
+              )}
+            </p>
           </div>
           <button type="button" className="btn-primary self-start sm:self-auto" onClick={openNew} title="New task (N)">
             <Plus size={18} /> New task
           </button>
         </div>
 
-        <StatsCards {...stats} />
+        <StatsCards total={stats.total} completed={stats.completed} pending={stats.pending} overdue={stats.overdue} />
 
         <Toolbar
           search={search}
@@ -244,7 +247,6 @@ export default function Dashboard() {
           </div>
         ) : loadError ? (
           <EmptyState
-            icon={<ClipboardList size={22} />}
             title="Couldn't load your tasks"
             text={loadError}
             action={
@@ -255,18 +257,16 @@ export default function Dashboard() {
           />
         ) : tasks.length === 0 ? (
           <EmptyState
-            icon={<ClipboardList size={22} />}
             title="No tasks yet"
-            text="Add your first assignment, quiz or project and CampusFlow will keep track of the deadline."
+            text="Add an assignment, quiz or project with its due date, and it will show up here."
             action={
               <button type="button" className="btn-primary" onClick={openNew}>
-                <Plus size={18} /> Add your first task
+                <Plus size={18} /> Add a task
               </button>
             }
           />
         ) : visible.length === 0 ? (
           <EmptyState
-            icon={<SearchX size={22} />}
             title="Nothing matches"
             text={search ? `No tasks match "${search}".` : "No tasks in this view."}
             action={
@@ -283,7 +283,7 @@ export default function Dashboard() {
             }
           />
         ) : filter === "all" ? (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {todo.length > 0 && (
               <TaskSection title="To do" count={todo.length}>
                 {todo.map((t) => (
@@ -300,7 +300,7 @@ export default function Dashboard() {
             )}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="divide-y divide-rule border-t border-rule">
             {visible.map((t) => (
               <TaskCard key={t.id} task={t} {...cardProps} />
             ))}
@@ -325,13 +325,11 @@ export default function Dashboard() {
 function TaskSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
   return (
     <section>
-      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+      <h2 className="mb-1 flex items-baseline gap-2 text-sm font-medium text-pencil">
         {title}
-        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs normal-case tracking-normal text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-          {count}
-        </span>
+        <span className="tabular-nums text-pencil/70">{count}</span>
       </h2>
-      <div className="space-y-3">{children}</div>
+      <div className="divide-y divide-rule border-t border-rule">{children}</div>
     </section>
   )
 }

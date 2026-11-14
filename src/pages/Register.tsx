@@ -39,12 +39,12 @@ export default function Register() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Keep every assignment and deadline in one place."
+      title="Create an account"
+      subtitle="Keep every assignment, quiz and deadline in one list."
       footer={
         <>
           Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+          <Link to="/login" className="font-medium text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink">
             Log in
           </Link>
         </>
@@ -52,7 +52,7 @@ export default function Register() {
     >
       <form onSubmit={handleRegister} className="space-y-4">
         {error && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          <p role="alert" className="border-l-2 border-redpen py-1 pl-3 text-sm text-redpen">
             {error}
           </p>
         )}
@@ -104,7 +104,7 @@ export default function Register() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <p className={`mt-1.5 text-xs ${tooShort ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-400"}`}>
+          <p className={`mt-1.5 text-sm ${tooShort ? "text-redpen" : "text-pencil"}`}>
             {tooShort ? `${8 - password.length} more characters needed` : "Use 8 or more characters."}
           </p>
         </div>

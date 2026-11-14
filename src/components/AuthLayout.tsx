@@ -11,27 +11,22 @@ type Props = {
 
 export default function AuthLayout({ title, subtitle, children, footer }: Props) {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-10">
-      {/* soft background accent */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-indigo-100/70 to-transparent dark:from-indigo-950/40" />
-
-      <div className="absolute right-4 top-4">
+    <div className="flex min-h-screen flex-col">
+      <header className="flex items-center justify-between px-5 py-5 sm:px-10">
+        <Logo />
         <ThemeToggle />
-      </div>
+      </header>
 
-      <div className="relative w-full max-w-sm animate-pop-in">
-        <div className="mb-8 flex justify-center">
-          <Logo size="lg" />
+      <main className="flex flex-1 items-start justify-center px-4 pb-16 pt-6 sm:items-center sm:pt-0">
+        <div className="w-full max-w-sm">
+          <h1 className="text-[32px] font-medium leading-tight tracking-[-0.02em]">{title}</h1>
+          <p className="mt-2 text-pencil">{subtitle}</p>
+
+          <div className="mt-8">{children}</div>
+
+          <p className="mt-10 text-sm text-pencil">{footer}</p>
         </div>
-
-        <div className="card p-6 sm:p-8">
-          <h1 className="text-xl font-semibold">{title}</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
-          <div className="mt-6">{children}</div>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">{footer}</p>
-      </div>
+      </main>
     </div>
   )
 }

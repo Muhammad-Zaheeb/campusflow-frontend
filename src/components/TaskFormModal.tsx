@@ -10,10 +10,10 @@ type Props = {
   onSave: (input: TaskInput) => void
 }
 
-const priorities: { value: Priority; label: string; active: string }[] = [
-  { value: "Low", label: "Low", active: "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" },
-  { value: "Medium", label: "Medium", active: "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300" },
-  { value: "High", label: "High", active: "border-red-500 bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300" },
+const priorities: { value: Priority; active: string }[] = [
+  { value: "Low", active: "border-ink bg-ink text-paper" },
+  { value: "Medium", active: "border-ink bg-ink text-paper" },
+  { value: "High", active: "border-redpen bg-redpen text-sheet" },
 ]
 
 export default function TaskFormModal({ open, task, saving, onClose, onSave }: Props) {
@@ -55,7 +55,7 @@ function TaskForm({ task, saving, onClose, onSave }: Omit<Props, "open">) {
           <input
             id="task-title"
             className="input"
-            placeholder="e.g. Finish DSA assignment 3"
+            placeholder="e.g. DSA assignment 3"
             value={title}
             maxLength={200}
             autoFocus
@@ -64,12 +64,12 @@ function TaskForm({ task, saving, onClose, onSave }: Omit<Props, "open">) {
               setError("")
             }}
           />
-          {error && <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="mt-1.5 text-sm text-redpen">{error}</p>}
         </div>
 
         <div>
           <label htmlFor="task-description" className="label">
-            Description <span className="font-normal text-slate-400">(optional)</span>
+            Description <span className="font-normal text-pencil">(optional)</span>
           </label>
           <textarea
             id="task-description"
@@ -92,13 +92,11 @@ function TaskForm({ task, saving, onClose, onSave }: Omit<Props, "open">) {
                   type="button"
                   onClick={() => setPriority(p.value)}
                   aria-pressed={priority === p.value}
-                  className={`rounded-lg border px-2 py-2 text-xs font-semibold transition ${
-                    priority === p.value
-                      ? p.active
-                      : "border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+                  className={`rounded-full border px-2 py-2 text-sm font-medium transition ${
+                    priority === p.value ? p.active : "border-rule text-pencil hover:border-pencil/50 hover:text-ink"
                   }`}
                 >
-                  {p.label}
+                  {p.value}
                 </button>
               ))}
             </div>
@@ -106,16 +104,18 @@ function TaskForm({ task, saving, onClose, onSave }: Omit<Props, "open">) {
 
           <div>
             <label htmlFor="task-due" className="label">
-              Due date <span className="font-normal text-slate-400">(optional)</span>
+              Due date <span className="font-normal text-pencil">(optional)</span>
             </label>
-            <div className="flex gap-1.5">
-              <input id="task-due" type="date" className="input" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              {dueDate && (
-                <button type="button" className="btn-secondary px-3" onClick={() => setDueDate("")} title="Remove due date">
-                  Clear
-                </button>
-              )}
-            </div>
+            <input id="task-due" type="date" className="input" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            {dueDate && (
+              <button
+                type="button"
+                className="mt-1.5 text-sm text-pencil underline decoration-pencil/30 underline-offset-4 hover:text-ink"
+                onClick={() => setDueDate("")}
+              >
+                Remove date
+              </button>
+            )}
           </div>
         </div>
 

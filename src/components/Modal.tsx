@@ -26,15 +26,15 @@ export default function Modal({ open, title, onClose, children, size = "md" }: P
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 bg-ink/30 backdrop-blur-[2px] dark:bg-black/50" onClick={onClose} />
       <div
-        className={`card relative w-full animate-pop-in rounded-b-none p-5 sm:rounded-2xl sm:p-6 ${
+        className={`relative w-full animate-dialog-in rounded-t-2xl border border-rule bg-sheet p-6 shadow-2xl shadow-ink/10 sm:rounded-2xl sm:p-7 ${
           size === "sm" ? "sm:max-w-sm" : "sm:max-w-lg"
         }`}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-xl font-medium tracking-tight">{title}</h2>
           <button type="button" onClick={onClose} className="icon-btn -mr-2" aria-label="Close">
             <X size={18} />
           </button>

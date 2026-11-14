@@ -2,48 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- Theme tokens (RGB triplets) ---------- */
 @layer base {
-  html {
-    @apply antialiased;
+  /* Light: porcelain paper, ink text */
+  :root {
+    --paper: 250 250 248;
+    --sheet: 255 255 255;
+    --ink: 20 24 33;
+    --pencil: 107 114 128;
+    --rule: 231 231 227;
+    --pen: 44 72 140;
+    --pen-strong: 33 54 107;
+    --on-pen: 255 255 255;
+    --marker: 246 220 110;
+    --on-marker: 20 24 33;
+    --redpen: 166 61 50;
     color-scheme: light;
   }
+
+  /* Dark: night ink */
   html.dark {
+    --paper: 20 27 38;
+    --sheet: 27 35 49;
+    --ink: 236 238 242;
+    --pencil: 150 158 172;
+    --rule: 45 55 72;
+    --pen: 160 182 232;
+    --pen-strong: 190 206 242;
+    --on-pen: 20 27 38;
+    --marker: 222 196 96;
+    --on-marker: 20 27 38;
+    --redpen: 232 132 116;
     color-scheme: dark;
   }
+
+  html {
+    @apply antialiased;
+  }
   body {
-    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans transition-colors duration-200;
+    @apply bg-paper font-sans text-ink transition-colors duration-150;
+    font-feature-settings: "tnum" 1;
+  }
+  ::selection {
+    @apply bg-marker/60 text-on-marker;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
+/* ---------- Building blocks ---------- */
 @layer components {
-  .card {
-    @apply rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+  .panel {
+    @apply rounded border border-rule bg-sheet;
   }
   .input {
-    @apply w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400
-      outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/15
-      dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400;
+    @apply w-full rounded border border-rule bg-sheet px-3.5 py-2.5 text-[15px] text-ink placeholder:text-pencil/70
+      outline-none transition focus:border-ink/40 focus:ring-4 focus:ring-ink/5 dark:focus:border-pencil;
   }
   .label {
-    @apply mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300;
+    @apply mb-1.5 block text-sm font-medium text-ink;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition
-      focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pen/50 focus-visible:ring-offset-2
+      focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-primary {
-    @apply btn bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-500/30;
+    @apply btn bg-ink text-paper hover:bg-ink/85;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-400/30
-      dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+    @apply btn border border-rule bg-sheet text-ink hover:border-pencil/40;
   }
   .btn-danger {
-    @apply btn bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500/30;
+    @apply btn bg-redpen text-white hover:opacity-90 dark:text-paper;
   }
   .icon-btn {
-    @apply inline-flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40
-      dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100;
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-full text-pencil transition hover:bg-ink/5 hover:text-ink
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pen/50 sm:h-9 sm:w-9;
+  }
+  /* Highlighter: a soft marker stroke under the lower half of the text */
+  .highlight {
+    background-image: linear-gradient(transparent 52%, rgb(var(--marker) / 0.6) 52%, rgb(var(--marker) / 0.6) 94%, transparent 94%);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  html.dark .highlight {
+    @apply rounded-[3px] px-1 -mx-1;
+    background-image: none;
+    background-color: rgb(var(--marker) / 0.22);
   }
 }

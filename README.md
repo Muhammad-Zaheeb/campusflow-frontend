@@ -25,7 +25,7 @@
 - Create, edit and delete tasks with a title, description, priority (Low / Medium / High) and optional due date
 - Mark tasks done with one click; completed tasks move to their own section
 - Smart due labels: *Due today*, *Due tomorrow*, *Due in 5 days*, *Overdue by 2 days*
-- Overdue tasks are highlighted in red
+- Tasks due today get a highlighter stroke; overdue dates are shown in red
 
 **Finding things**
 - Search across titles and descriptions
@@ -37,7 +37,7 @@
 - Stat cards (total, pending, completed, overdue) and an overall progress bar
 
 **Experience**
-- Light and dark mode: follows your system setting and remembers your choice
+- Light and dark mode (porcelain and night ink): follows your system setting and remembers your choice
 - Fully responsive, from a 320px phone to a large monitor, with 44px tap targets on mobile
 - Add/edit in a modal, confirm before deleting, toast notifications, loading skeletons and empty states
 - Keyboard shortcut: press **N** to add a task

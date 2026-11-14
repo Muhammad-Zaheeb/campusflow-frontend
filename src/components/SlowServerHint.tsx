@@ -19,11 +19,10 @@ export default function SlowServerHint({ delayMs = 3500 }: { delayMs?: number })
   return (
     <div
       role="status"
-      className="mt-4 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 animate-fade-in
-        dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+      className="mt-4 flex items-start gap-2.5 rounded border border-rule bg-sheet p-3 text-sm text-pencil"
     >
       <Loader2 size={16} className="mt-0.5 shrink-0 animate-spin" />
-      <span>The server is waking up after being idle. This can take up to a minute the first time.</span>
+      <span>The server is starting up after being idle. This can take up to a minute.</span>
     </div>
   )
 }

@@ -1,6 +1,6 @@
-import { CalendarDays, Check, Pencil, Trash2 } from "lucide-react"
+import { Check, Pencil, Trash2 } from "lucide-react"
 import type { Task } from "../types"
-import { dueLabel, isOverdue } from "../utils/date"
+import { dueLabel, isDueToday } from "../utils/date"
 import PriorityBadge from "./PriorityBadge"
 
 type Props = {
@@ -11,76 +11,68 @@ type Props = {
 }
 
 const toneClasses = {
-  danger: "text-red-600 dark:text-red-400",
-  warning: "text-amber-600 dark:text-amber-400",
-  info: "text-indigo-600 dark:text-indigo-400",
-  muted: "text-slate-500 dark:text-slate-400",
+  danger: "text-redpen",
+  warning: "text-ink",
+  info: "text-pencil",
+  muted: "text-pencil",
 }
 
+/** One row in the task list. */
 export default function TaskCard({ task, onToggle, onEdit, onDelete }: Props) {
   const label = dueLabel(task)
-  const overdue = isOverdue(task)
+  const today = isDueToday(task)
 
   return (
-    <article
-      className={`card group flex gap-3 p-4 transition hover:shadow-md animate-fade-in ${
-        overdue ? "border-l-4 border-l-red-500 dark:border-l-red-500" : ""
-      } ${task.completed ? "opacity-70" : ""}`}
-    >
+    <article className="group flex gap-3.5 py-4">
       <button
         type="button"
         onClick={() => onToggle(task)}
         role="checkbox"
         aria-checked={task.completed}
         aria-label={task.completed ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
-        className={`relative mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 transition before:absolute before:-inset-2.5 before:content-['']
-          focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/25 ${
-            task.completed
-              ? "border-emerald-500 bg-emerald-500 text-white"
-              : "border-slate-300 text-transparent hover:border-emerald-500 hover:text-emerald-500 dark:border-slate-600"
+        className={`relative mt-[3px] grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition
+          before:absolute before:-inset-[13px] before:content-['']
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pen/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper ${
+            task.completed ? "border-ink bg-ink text-paper" : "border-pencil/50 text-transparent hover:border-ink"
           }`}
       >
-        <Check size={14} strokeWidth={3} />
+        <Check size={11} strokeWidth={3.5} />
       </button>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3
-            className={`break-words font-semibold ${
-              task.completed ? "text-slate-500 line-through dark:text-slate-400" : ""
-            }`}
-          >
-            {task.title}
-          </h3>
-          <PriorityBadge priority={task.priority} />
-        </div>
+        <h3
+          className={`break-words text-[15.5px] font-medium leading-snug ${
+            task.completed ? "text-pencil line-through decoration-pencil/50" : ""
+          }`}
+        >
+          <span className={today ? "highlight" : ""}>{task.title}</span>
+        </h3>
 
         {task.description && (
-          <p className="mt-1 whitespace-pre-line break-words text-sm text-slate-600 dark:text-slate-400">
-            {task.description}
-          </p>
+          <p className="mt-0.5 whitespace-pre-line break-words text-sm leading-relaxed text-pencil">{task.description}</p>
         )}
 
-        {label && (
-          <p className={`mt-2 flex items-center gap-1.5 text-xs font-medium ${toneClasses[label.tone]}`}>
-            <CalendarDays size={14} />
-            {label.text}
-          </p>
+        {(label || !task.completed) && (
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+            {label && <span className={`text-[13px] ${toneClasses[label.tone]}`}>{label.text}</span>}
+            {!task.completed && <PriorityBadge priority={task.priority} />}
+          </div>
         )}
       </div>
 
-      <div className="-mr-1 -mt-1 flex shrink-0 items-start gap-0.5">
+      {/* Visible on hover with a mouse; always visible on touch screens */}
+      <div className="-mr-1.5 -mt-1.5 flex shrink-0 items-start transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within:opacity-100 [@media(hover:hover)]:group-hover:opacity-100">
         <button type="button" onClick={() => onEdit(task)} className="icon-btn" aria-label={`Edit "${task.title}"`} title="Edit">
-          <Pencil size={16} />
+          <Pencil size={15} />
         </button>
         <button
           type="button"
           onClick={() => onDelete(task)}
-          className="icon-btn hover:!bg-red-50 hover:!text-red-600 dark:hover:!bg-red-950/50 dark:hover:!text-red-400"
+          className="icon-btn hover:!text-redpen"
           aria-label={`Delete "${task.title}"`}
           title="Delete"
         >
-          <Trash2 size={16} />
+          <Trash2 size={15} />
         </button>
       </div>
     </article>

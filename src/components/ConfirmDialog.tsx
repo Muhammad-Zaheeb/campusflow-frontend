@@ -13,7 +13,7 @@ type Props = {
 export default function ConfirmDialog({ open, title, message, confirmLabel = "Delete", busy, onConfirm, onCancel }: Props) {
   return (
     <Modal open={open} title={title} onClose={onCancel} size="sm">
-      <p className="text-sm text-slate-600 dark:text-slate-400">{message}</p>
+      <p className="text-pencil">{message}</p>
       <div className="mt-6 flex justify-end gap-2">
         <button type="button" className="btn-secondary" onClick={onCancel} disabled={busy}>
           Cancel

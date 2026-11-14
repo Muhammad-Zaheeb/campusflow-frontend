@@ -33,26 +33,26 @@ export default function Login() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Log in to see your tasks and deadlines."
+      title="Log in"
+      subtitle="Your assignments and deadlines are waiting."
       footer={
         <>
           New to CampusFlow?{" "}
-          <Link to="/register" className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400">
+          <Link to="/register" className="font-medium text-ink underline decoration-ink/25 underline-offset-4 hover:decoration-ink">
             Create an account
           </Link>
         </>
       }
     >
       {registeredEmail && !error && (
-        <p className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
-          Account created. Log in to get started.
+        <p className="mb-6 border-l-2 border-pen py-1 pl-3 text-sm text-ink">
+          Account created. Log in with your new password.
         </p>
       )}
 
       <form onSubmit={handleLogin} className="space-y-4">
         {error && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          <p role="alert" className="border-l-2 border-redpen py-1 pl-3 text-sm text-redpen">
             {error}
           </p>
         )}
