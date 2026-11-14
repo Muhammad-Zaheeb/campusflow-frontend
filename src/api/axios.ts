@@ -17,7 +17,10 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // A 401 from /login just means wrong credentials: let the form show the error.
+    // Any other 401 means the session expired, so send the user back to login.
+    const isLoginRequest = err.config?.url?.includes("/login")
+    if (err.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem("token")
       window.location.href = "/login"
     }
