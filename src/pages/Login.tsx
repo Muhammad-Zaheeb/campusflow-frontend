@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import api from "../api/axios"
+import { getErrorMessage } from "../utils/errors"
 
 export default function Login() {
   const [email, setEmail] = useState("")
@@ -8,7 +9,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  const handleLogin = async (e: any) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
 
     setLoading(true)
@@ -23,7 +24,7 @@ export default function Login() {
       localStorage.setItem("token", res.data.access_token)
       window.location.href = "/dashboard"
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Login failed")
+      setError(getErrorMessage(err, "Login failed"))
     } finally {
       setLoading(false)
     }
@@ -32,13 +33,16 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 text-white">
 
-      <form onSubmit={handleLogin} className="bg-gray-900 p-8 rounded-xl w-96">
+      <form onSubmit={handleLogin} className="bg-gray-900 p-8 rounded-xl w-full max-w-sm mx-4">
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
 
         {error && <p className="text-red-400 mb-3 text-center">{error}</p>}
 
         <input
           className="w-full p-3 mb-3 bg-gray-800 rounded"
+          type="email"
+          required
+          autoComplete="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -46,13 +50,19 @@ export default function Login() {
 
         <input
           type="password"
+          required
+          autoComplete="current-password"
           className="w-full p-3 mb-4 bg-gray-800 rounded"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <button className="w-full bg-blue-600 p-3 rounded">
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 p-3 rounded transition"
+        >
           {loading ? "Loading..." : "Login"}
         </button>
 
