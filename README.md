@@ -4,6 +4,8 @@
 
 **[Live demo](https://campusflow-frontend-blond.vercel.app)** · **[Backend repo](https://github.com/Muhammad-Zaheeb/campusflow)** · **[API docs](https://campusflow-uoi7.onrender.com/docs)**
 
+[![CI](https://github.com/Muhammad-Zaheeb/campusflow-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/Muhammad-Zaheeb/campusflow-frontend/actions/workflows/ci.yml)
+[![Backend tests](https://github.com/Muhammad-Zaheeb/campusflow/actions/workflows/tests.yml/badge.svg)](https://github.com/Muhammad-Zaheeb/campusflow/actions/workflows/tests.yml)
 ![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
@@ -44,6 +46,9 @@
 - Register and log in with JWT authentication
 - Passwords hashed with bcrypt; input validated on both client and server
 - Each user can only see and change their own tasks
+
+**Quality**
+- 30 backend tests (pytest) and lint, type-check and build checks on every push, all run by GitHub Actions
 
 ## Screenshots
 
@@ -122,7 +127,7 @@ Without a `.env.local`, the app uses the live API on Render.
 
 ## Roadmap
 
-- Automated tests and CI
+- Frontend tests (React Testing Library)
 - Docker setup for the whole stack
 - Course/subject tags for tasks
 - Calendar view
